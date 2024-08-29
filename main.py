@@ -4,11 +4,15 @@ from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
 import os
+from dotenv import load_dotenv, dotenv_values
+
+# load env variables
+load_dotenv()
 
 # Spotify Web API constants
-CLIENT_ID = os.environ.get('CLIENT_ID')
-CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
-REDIRECT_URI = 'http//localhost:5000/callback'
+CLIENT_ID = os.getenv('CLIENT_ID')
+CLIENT_SECRET = os.getenv('CLIENT_SECRET')
+REDIRECT_URI = 'http://localhost:5000/callback'
 SCOPE = 'playlist-read-private,streaming'
 
 # create Flask app
