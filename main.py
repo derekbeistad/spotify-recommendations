@@ -1,10 +1,15 @@
 # imports
-from flask import Flask, session, redirect, url_for, request
+from flask import Flask, session, redirect, url_for, request, render_template, flash
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
 import os
+import json
 from dotenv import load_dotenv, dotenv_values
+from collections import Counter
+import numpy as np
+from flask_wtf.csrf import CSRFProtect
+from datetime import timedelta
 
 # load env variables
 load_dotenv()
@@ -12,12 +17,21 @@ load_dotenv()
 # Spotify Web API constants
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
+SECRET_KEY = os.getenv('SECRET_KEY')
 REDIRECT_URI = 'http://localhost:5000/callback'
-SCOPE = 'playlist-read-private,streaming'
+SCOPE = 'playlist-read-private,user-top-read,playlist-modify-public'
 
 # create Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(64)
+app.config['SECRET_KEY'] = SECRET_KEY
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+
+# Configuration based on environment
+app.config['ENV'] = os.getenv('ENV', 'development')  # Default to 'development' if not set
+# Use secure cookies
+app.config['SESSION_COOKIE_SECURE'] = True  # Ensures cookies are only sent over HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevents JavaScript from accessing cookies
+csrf = CSRFProtect(app)
 
 # spotipy cache handler setup
 cache_handler = FlaskSessionCacheHandler(session)
@@ -35,37 +49,254 @@ sp_oauth = SpotifyOAuth(
 # setup Spotify
 sp = Spotify(auth_manager=sp_oauth)
 
+# Force HTTPS in production
+@app.before_request
+def before_request():
+    if not request.is_secure and app.config['ENV'] == 'production':
+        return redirect(request.url.replace("http://", "https://"))
+
 # home route
 @app.route('/')
 def home():
+    return render_template('index.html')
+
+# home route
+@app.route('/login')
+def login():
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
         auth_url = sp_oauth.get_authorize_url()
         return redirect(auth_url)
-    return redirect(url_for('get_playlists'))
+    return redirect(url_for('get_top_artists'))
 
 # redirect uri route
 @app.route('/callback')
 def callback():
-    sp_oauth.get_access_token(request.args['code'])
-    return redirect(url_for('get_playlists'))
+    # This retrieves the cached token instead of getting a new one
+    token_info = sp_oauth.get_cached_token()
 
-# get_playlists route
-@app.route('/get_playlists')
-def get_playlists():
+    # If no token exists, fetch a new one
+    if not token_info:
+        token_info = sp_oauth.get_access_token(request.args['code'], as_dict=False)
+    return redirect(url_for('get_top_artists'))
+
+# get_top_artists route
+@app.route('/get_top_artists', methods=['GET', 'POST'])
+def get_top_artists():
+    # Route Functions
+    def create_artists_genres_arrays(top_artists):
+        """input spotify's current user top artists object and
+            return 2 arrays, genre names and artist ids"""
+        genres_array = []
+        artist_array = []
+        for artist in top_artists:
+            for genre in artist['genres']:
+                genres_array.append(genre)
+            artist_array.append(artist['id'])
+        return (genres_array, artist_array)
+
+    def clean_arrays(array):
+        """Input: array of strings
+            Output: array of ordered, top 5 without duplicates"""
+        # orders array by most common
+        ordered_array = [item for items, c in 
+                       Counter(array).most_common() for item in [items] * c] 
+        no_dupes = []
+        for x in ordered_array: # remove duplicates
+            if x not in no_dupes:
+                no_dupes.append(x)  
+        return no_dupes[:5]
+
+    def get_audio_features_stats(audio_features):
+        """Input: Spotify audio features object. 
+        Return: Danceability Stats, Energy Stats, and Valence Stats as dictionaries"""
+        # extract features from the spotify features object
+        danceability_array, energy_array, valence_array = [], [], []
+        for track in audio_features:
+            danceability_array.append(track['danceability'])
+            energy_array.append(track['energy'])
+            valence_array.append(track['valence'])
+        
+        danceability = {
+        'min': min(danceability_array),
+        'mean': float(np.mean(danceability_array)),
+        'max': max(danceability_array)
+        }
+
+        energy = {
+            'min': min(energy_array),
+            'mean': float(np.mean(energy_array)),
+            'max': max(energy_array)
+        }
+
+        valence = {
+            'min': min(valence_array),
+            'mean': float(np.mean(valence_array)),
+            'max': max(valence_array)
+        }
+
+        return (danceability, energy, valence)
+    
+    def get_spotify_recommendations(genres, artists, danceability, energy, valence):
+        """INPUT: genres array, artists array, daceability dictionary, 
+            energy dictionary, valence dictionary
+            OUTPUT: artist seeds, genre seeds, and track recommendations"""
+        recs = sp.recommendations(    #5 total seeds
+                                seed_genres=genres[:2]
+                            #    ,seed_tracks=track_ids[:2]
+                               ,seed_artists=artists[:3]
+                               ,min_danceability=danceability['min']
+                               ,max_danceability=danceability['max']
+                               ,target_danceability=danceability['mean']
+                               ,min_energy=energy['min']
+                               ,max_energy=energy['max']
+                               ,target_energy=energy['mean']
+                               ,min_valence=valence['min']
+                               ,max_valence=valence['max']
+                               ,target_valence=valence['mean']
+                               ,min_popularity=0
+                               ,max_popularity=8
+                               ,target_popularity=4           #popularity setting
+                               )
+        cleaned_tracks = []
+        for track in recs['tracks']:
+            cleaned_tracks.append({
+                'track_id': track['id'],
+                'track_name': track['name'],
+                'track_image': track['album']['images'][0]['url'],
+                'preview': track['preview_url'],
+                'artist_id': track['artists'][0]['id'],
+                'artist_name': track['artists'][0]['name']
+            })
+        artist_seeds = []
+        genre_seeds = []
+        for seed in recs['seeds']:
+            if seed['type'] == 'ARTIST':
+                artist = sp.artist(seed['id'])
+                artist_seeds.append({
+                    'name': artist['name'],
+                    'id': artist['id'],
+                    'image_url': artist['images'][0]['url']
+                })
+            else:
+                genre_seeds.append(seed['id'])
+        return (artist_seeds, genre_seeds, cleaned_tracks)
+
+    def get_user_info():
+        """no inputs, returns a dictionaty of current loggedin users name and ID"""
+        user = sp.current_user()
+        user_info = {
+            'name': user['display_name'],
+            'id': user['id']
+        }
+        return user_info
+    
+    def create_user_playlist():
+        """checks if playlist already exists and then creates a 
+        playlist with the recommended tracks for the user.
+        If a playlist was already created, it will create a new
+        playlist wiht a unique name."""
+        
+        base_name = f"{user['name'].title()}'s Discovery Jam Vol:"
+        check = sp.user_playlists(user=user['id'], limit=1)['items']
+        if base_name in check[0]['name']:
+            idx = check[0]['name'].find(base_name) + len(base_name) + 1
+            vol_num = int(check[0]['name'][idx:]) + 1
+        else:
+            vol_num = 1
+
+        playlist_name = base_name + '0' + str(vol_num)
+        
+        sp.user_playlist_create(user=user['id'],
+                                name=playlist_name,
+                                description="Discovery playlist created using your top genres and artists over the past year with the goal of helping you find new artists with smaller followings. Learn more at **webaddress**")
+        playlist = sp.user_playlists(user=user['id'], limit=1)['items']
+        sp.user_playlist_add_tracks(user=user['id'],
+                                    playlist_id=playlist[0]['id'],
+                                    tracks=[track['track_id'] for track in track_recs])
+        
+        if playlist:
+            return playlist[0]['external_urls']['spotify']
+        else:
+            return False
+
+    # check validation
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
         auth_url = sp_oauth.get_authorize_url()
         return redirect(auth_url)
     
-    playlists = sp.current_user_playlists()
-    playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
-    playlists_html = '<br>'.join([f'{name}: {url}' for name, url in playlists_info])
-    return playlists_html
+    # get current user info
+    user = get_user_info()
+    top_artists = sp.current_user_top_artists(time_range='long_term')['items']
+    top_tracks = sp.current_user_top_tracks(limit=40, time_range='long_term')['items']
+
+    # get array of genres and artists from  spotify objects
+    genres_array, artists_array = create_artists_genres_arrays(top_artists=top_artists)
+
+    # order by most common and limit to 5
+    genres = clean_arrays(genres_array)
+    artists = clean_arrays(artists_array)
+
+    # create list of dictionaries for top tracks
+    tracks = []
+    for track in top_tracks:
+        tracks.append(
+            {
+                'id': track['id'],
+                'title': track['name'],
+                'artist': track['artists'][0]['name']
+            }
+        )
+
+    track_ids = [track['id'] for track in tracks] # make list of track ids
+    audio_features = sp.audio_features(tracks=track_ids) # get spotify audio features
+
+    # extract features from the spotify features object
+    danceability, energy, valence = get_audio_features_stats(audio_features=audio_features)
+
+    # genre_options = sp.recommendation_genre_seeds()
+    artist_seeds, genre_seeds, track_recs = get_spotify_recommendations(genres=genres, 
+                                                    artists=artists, 
+                                                    danceability=danceability, 
+                                                    energy=energy, 
+                                                    valence=valence)
+
+    if request.method == 'POST':  # When the form is submitted
+        playlist_url = create_user_playlist()
+        if playlist_url:
+            session.clear()
+            message = 'Playlist Created! View ↓'
+            return redirect(url_for('success', playlist_url=playlist_url))  # Pass the URL as a query parameter
+        elif not playlist_url:
+            message = 'Playlist not created, try again'
+        return redirect(url_for('get_top_artists', message=message))  # Redirect to avoid form resubmission
+
+    # Handle GET request
+    playlist_url = request.args.get('playlist_url')  # Retrieve the playlist URL from the query parameters
+    playlist_created = request.args.get('playlist_created')  # Check if the playlist was created
+    message = request.args.get('message')
+
+    return render_template('recs.html', user=user, artist_seeds=artist_seeds, genre_seeds=genre_seeds, track_recs=track_recs, playlist_url=playlist_url, playlist_created=playlist_created, message=message)
+
+# Pplaylist created Successfully
+@app.route('/success')
+def success():
+    playlist_url = request.args.get('playlist_url')  # Retrieve the playlist URL from the query parameters
+    return render_template('playlist_created.html', playlist_url=playlist_url)
 
 # logout route
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('home'))
+
+# Handle errors
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('500.html'), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

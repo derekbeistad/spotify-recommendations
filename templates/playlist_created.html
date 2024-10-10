@@ -1,0 +1,21 @@
+{% include 'header.html' %}
+
+<div class="hero-section">
+    <h1 class="hero-title">Playlist Created!</h1>
+    <p class="text"></p>
+        Remember, we aim to give you the most accurate recommendations for
+        artists that are lesser-known.
+    </p>
+    <h3 class="hero-title flash">View ↓</h3>
+
+    <!-- Create Playlist logic and button -->
+    {% if playlist_url %} 
+        <a href="{{ playlist_url }}" class="login-btn" target="_blank"
+            ><span class="hero-text">Your Discovery Jam</span></a>
+    {% endif %}
+     
+    <p class="subheading">Looking at the past year of your listening...</p>
+    
+</div>
+
+{% include 'footer.html' %}

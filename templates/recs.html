@@ -1,0 +1,88 @@
+{% include 'header.html' %}
+
+<div class="hero-section">
+    <h1 class="hero-title">GREAT LISTENING,</h1>
+    <h1 class="hero-title">{{ user['name'].upper() }}!</h1>
+    <p class="text">
+        Remember, we aim to give you the most accurate recommendations for
+        artists that are lesser-known.
+    </p>
+
+    <!-- Create PLaylist logic and button -->
+    {% if message %}
+        <p class="hero-text flash">{{ message }}</p>
+    {% endif %}
+
+    {% if not playlist_url %}
+        <form method="POST" action="/get_top_artists">
+            <!-- CSRF token for security -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button class="submit-btn" type="submit">
+                Create Spotify Playlist
+            </button>
+        </form>
+    {% else %} 
+        <a href="{{ playlist_url }}" class="login-btn" target="_blank"
+            ><span class="hero-text">Your Discovery Jam</span></a>
+    {% endif %}
+     
+    <p class="subheading">Looking at the past year of your listening...</p>
+
+    <div class="top_seeds">
+        <div class="col">
+            <p class="hero-text">Your top genres were:</p>
+            {% for genre in genre_seeds %}
+                <p class="text">{{ genre }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="col">
+            <p class="hero-text">Your top artists were:</p>
+            {% for artist in artist_seeds %}
+                <p class="text">{{ artist['name'] }}</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <p class="hero-text">Your top recs are:</p>
+    <div class="recs_grid">
+        {% for track in track_recs %}
+            <div>
+                <a
+                    href="https://open.spotify.com/track/{{ track['track_id'] }}"
+                    target="_blank">
+                    <p class="nav_title">
+                        <span class="italic">'{{ track['track_name'] }}'</span>, by
+                        <span class="bold">{{ track['artist_name'] }}</span></p>
+                    <img
+                        src="{{ track['track_image'] }}"
+                        alt="cover art"
+                        width="150"
+                        height="150"/></a>
+                <p class="nav_title">preview:</p>
+                <audio controls src="{{ track['preview'] }}"></audio>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Create PLaylist logic and button -->
+    {% if message %}
+        <p class="hero-text flash">{{ message }}</p>
+    {% endif %}
+
+    {% if not playlist_url %}
+        <form method="POST" action="/get_top_artists">
+            <!-- CSRF token for security -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button class="submit-btn" type="submit">
+                Create Spotify Playlist
+            </button>
+        </form>
+    {% else %} 
+        <a href="{{ playlist_url }}" class="login-btn" target="_blank"
+            ><span class="hero-text">Your Discovery Jam</span></a>
+    {% endif %}
+    
+</div>
+
+{% include 'footer.html' %}
