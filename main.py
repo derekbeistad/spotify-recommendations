@@ -10,21 +10,93 @@ from collections import Counter
 import numpy as np
 from flask_wtf.csrf import CSRFProtect
 from datetime import timedelta
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
+import base64
+import textwrap
+# from flask import send_file
 
 # load env variables
 load_dotenv()
+
+# Create playlist Cover Image Function
+def create_playlist_cover(playlist_name):
+    # Create a new blank image with RGB mode
+    img = Image.new('RGB', (800, 800), color='#171717')
+
+    # Initialize ImageDraw
+    d = ImageDraw.Draw(img)
+
+    # Define fonts (you may need to provide the full path to a .ttf file)
+    try:
+        font = ImageFont.truetype("fonts/PalanquinDark-Bold", 120)
+    except IOError:
+        font = ImageFont.load_default()
+
+    # Define text and wrap it to fit within image width
+    max_width = 780  # Maximum width for the text (accounting for margins)
+    wrapped_text = textwrap.fill(playlist_name, width=20)  # Wrap text to fit the image
+
+    # Split the wrapped text into multiple lines
+    lines = wrapped_text.split('\n')
+
+    # Calculate the total height of the text block to center it vertically
+    total_text_height = sum([d.textbbox((0, 0), line, font=font)[3] for line in lines])
+
+    # Starting Y position (for vertical centering)
+    y = (800 - total_text_height) // 2
+
+    # Draw each line of text aligned to the right
+    for line in lines:
+        # Get text bounding box (to calculate width and height)
+        bbox = d.textbbox((0, 0), line, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        
+        # Align the text to the right by placing it at the far right minus the text width
+        x = 800 - text_width - 10  # 10 pixels padding from the right edge
+
+        # Draw the text on the image
+        d.text((x, y), line, fill=(236, 160, 40), font=font)
+
+        # Move to the next line
+        y += text_height
+
+    # Draw the artist names
+    y_offset = 40
+    d.text((10, y_offset), 'made by Discovery Jam', fill=(247, 230, 210), font=font)
+
+    # Create a BytesIO object to hold the image
+    img_bytes = BytesIO()
+    img.save(img_bytes, format='JPEG')
+    img_bytes.seek(0)  # Seek to the beginning so it can be read
+
+    # Convert the image to base64
+    img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
+
+    return img_base64
+
+def ensure_token_is_valid():
+    token_info = sp_oauth.validate_token(cache_handler.get_cached_token())
+    
+    if not token_info:
+        # Refresh the token if it has expired
+        token_info = sp_oauth.refresh_access_token(cache_handler.get_cached_token()['refresh_token'])
+        cache_handler.save_token_to_cache(token_info)
+
 
 # Spotify Web API constants
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 SECRET_KEY = os.getenv('SECRET_KEY')
 REDIRECT_URI = 'http://localhost:5000/callback'
-SCOPE = 'playlist-read-private,user-top-read,playlist-modify-public'
+SCOPE = 'playlist-read-private,user-top-read,playlist-modify-public,ugc-image-upload'
 
 # create Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+app.config['SESSION_PERMANENT'] = False
 
 # Configuration based on environment
 app.config['ENV'] = os.getenv('ENV', 'development')  # Default to 'development' if not set
@@ -195,6 +267,9 @@ def get_top_artists():
         playlist with the recommended tracks for the user.
         If a playlist was already created, it will create a new
         playlist wiht a unique name."""
+
+        # Ensure that the token is valid before making any API requests
+        ensure_token_is_valid()
         
         base_name = f"{user['name'].title()}'s Discovery Jam Vol:"
         check = sp.user_playlists(user=user['id'], limit=1)['items']
@@ -213,6 +288,15 @@ def get_top_artists():
         sp.user_playlist_add_tracks(user=user['id'],
                                     playlist_id=playlist[0]['id'],
                                     tracks=[track['track_id'] for track in track_recs])
+        # Generate the cover image
+        img = create_playlist_cover(playlist_name)
+
+        # Upload the custom cover image
+        try:
+            sp.playlist_upload_cover_image(playlist_id=playlist[0]['id'], image_b64=img)
+        except Exception as e:
+            print(f"Error uploading cover image: {e}")
+
         
         if playlist:
             return playlist[0]['external_urls']['spotify']
@@ -299,4 +383,4 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)

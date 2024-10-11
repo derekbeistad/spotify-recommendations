@@ -2,9 +2,10 @@
 :root {
     --clr-light: #ededed;
     --clr-dark: #171717;
-    --clr-blue: #1c8eff;
-    --clr-gold: #ffce2b;
-    --clr-pink: #ff7875;
+    --clr-blue: #3961f1;
+    --clr-gold: #eca028;
+    --clr-red: #d91c2f;
+    --clr-off: #f7e6d2;
   
     --ff-hero: "Palanquin Dark", sans-serif;
     --ff-primary: "Palanquin", sans-serif;
