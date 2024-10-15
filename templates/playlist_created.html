@@ -6,7 +6,12 @@
         Remember, we aim to give you the most accurate recommendations for
         artists that are lesser-known.
     </p>
-    <h3 class="hero-title flash">View ↓</h3>
+
+    {% if img %}
+        <a href="{{ playlist_url }}" target="_blank">
+        <img class="cover-img" src="data:image/jpeg;base64,{{ img }}" alt="Playlist Cover" />
+        </a>
+    {% endif %}
 
     <!-- Create Playlist logic and button -->
     {% if playlist_url %} 
@@ -14,7 +19,7 @@
             ><span class="hero-text">Your Discovery Jam</span></a>
     {% endif %}
      
-    <p class="subheading">Looking at the past year of your listening...</p>
+    <p class="subheading">Thank you for using Discovery Jam</p>
     
 </div>
 

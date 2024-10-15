@@ -1,5 +1,6 @@
 {% include 'header.html' %}
 
+<div class="container">
 <div class="hero-section">
     <h1 class="hero-title">GREAT LISTENING,</h1>
     <h1 class="hero-title">{{ user['name'].upper() }}!</h1>
@@ -8,7 +9,7 @@
         artists that are lesser-known.
     </p>
 
-    <!-- Create Playlist logic and button -->
+    <!-- Create PLaylist logic and button -->
     {% if message %}
         <p class="hero-text flash">{{ message }}</p>
     {% endif %}
@@ -65,7 +66,7 @@
         {% endfor %}
     </div>
 
-    <!-- Create Playlist logic and button -->
+    <!-- Create PLaylist logic and button -->
     {% if message %}
         <p class="hero-text flash">{{ message }}</p>
     {% endif %}
@@ -74,7 +75,7 @@
         <form method="POST" action="/get_top_artists">
             <!-- CSRF token for security -->
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button class="submit-btn" type="submit" onclick="showLoading()">
+            <button class="submit-btn" type="submit">
                 Create Spotify Playlist
             </button>
         </form>
@@ -83,6 +84,7 @@
             ><span class="hero-text">Your Discovery Jam</span></a>
     {% endif %}
     
+</div>
 </div>
 
 <!-- Loading Overlay -->

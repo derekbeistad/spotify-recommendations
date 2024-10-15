@@ -4,7 +4,29 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Song Recommendations</title>
+        <!-- Meta Data -->
+        <meta name="description" content="Create a customized Spotify playlst with tracks from lesser-known artists.">
+        <meta name="author" content="Derek Beistad">
+        <meta name="keywords" content="Spotify, music, playlist, music recommendations">
+        <meta property="og:title" content="Discovery Jam">
+        <meta property="og:description" content="Create a customized Spotify playlst with tracks from lesser-known artists.">
+        <meta property="og:url" content="https://yourapp.com">
+        <meta property="og:image" content="../static/images/discovery-jam-logo.jpg">
+        <meta name="twitter:card" content="../static/images/discovery-jam-logo.jpg">
+        <meta name="twitter:title" content="Discovery Jam">
+        <meta name="twitter:description" content="Create a customized Spotify playlst with tracks from lesser-known artists.">
+        <meta name="twitter:image" content="../static/images/discovery-jam-logo.jpg">
+        <meta name="robots" content="index, follow">
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self';">
+        
+        <link rel="apple-touch-icon" sizes="180x180" href="../static/images/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="../static/images/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="../static/images/favicon-16x16.png">
+        <link rel="manifest" href="../static/images/site.webmanifest">
+
+
+        <title>Discovery Jam</title>
         <!-- CSS -->
         <link
             rel="stylesheet"
@@ -18,11 +40,18 @@
             rel="stylesheet"
         />
 
+        <script>
+            function showLoading() {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+            </script>
+            
+
     </head>
     <body>
         <!-- Nav -->
         <div class="nav">
-            <a href="/"><h1 class="nav-title">Song Recommendations</h1></a>
+            <a href="/"><h1 class="nav-title">Discovery Jam</h1></a>
         </div>
     </body>
 </html>

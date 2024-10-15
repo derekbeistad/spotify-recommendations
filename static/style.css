@@ -12,18 +12,27 @@
   }
   
   a {
-    color: var(--clr-light);
+    color: var(--clr-off);
     text-decoration: none;
   }
   
   html,
   body {
     background-color: var(--clr-dark);
-    color: var(--clr-light);
+    color: var(--clr-off);
     font-family: var(--ff-primary);
     margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    max-width: 100vw;
+    box-sizing: border-box;
     /* overflow: hidden; */
   }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+ }
   
   hr {
     animation: slideLeft 2s ease-in-out 1s 1 normal both;
@@ -47,7 +56,7 @@
     gap: 20px;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: auto;
-    padding: 0 5rem;
+    padding: 0 3rem;
     align-items: end;
   }
 
@@ -82,7 +91,7 @@
     font-family: var(--ff-primary);
     font-size: 2rem;
     font-weight: 100;
-    margin: 0 0.5rem;
+    margin: 1rem 0;
   }
 
   .text {
@@ -106,13 +115,47 @@
     font-style: italic;
   }
 
+  /* Loading Overlay */
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.841);
+    color: var(--clr-off);
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000; /* Ensure it's above all other content */
+  }
+
+  .spinner {
+    border: 8px solid var(--clr-off);
+    border-top: 8px solid var(--clr-gold);
+    border-radius: 40%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
   /* Hero Section */
   .hero-section {
     display: grid;
-    margin: 5rem;
-    padding: 1rem;
+    padding: 5rem 1rem;
     text-align: center;
     justify-items: center;
+    align-items: center;
+    align-content: center;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .login-btn {
@@ -121,12 +164,13 @@
     width:fit-content;
     padding: 0.5rem 1rem;
     margin: 1.5rem;
+    text-align: center;
   }
 
   .submit-btn {
     background-color: var(--clr-blue);
     border: none;
-    color: var(--clr-light);
+    color: var(--clr-off);
     border-radius: 50px;
     box-shadow: none;
     font-family: var(--ff-hero);
@@ -139,15 +183,23 @@
   .submit-btn:hover {
     cursor: pointer;
     color: var(--clr-gold);
-    opacity: 0.9;
+    opacity: 0.95;
     transform: scale(1.01);
   }
 
   .login-btn:hover {
     color: var(--clr-gold);
     cursor: pointer;
-    opacity: 0.9;
+    opacity: 0.95;
     transform: scale(1.01);
+  }
+
+  /* success page */
+  .cover-img {
+    border: 5px solid var(--clr-off);
+    width: 20rem;
+    height: auto;
+    margin: 1rem 0;
   }
 
   /* Nav */
@@ -160,24 +212,41 @@
   }
   
   /* Media Changes */
-
-
+  @media (max-width: 1050px) {
+    .recs_grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
 
   @media (max-width: 800px) {
-    .hero-text,
+    /* .hero-text,
     .subheading {
       text-align: left;
-    }
+    } */
   
     .hero-title {
-      font-size: 3.5rem;
-      text-align: left;
+      font-size: 4.5rem;
+      line-height: 4.5rem;
+      /* text-align: left; */
     }
+
+    .recs_grid {
+      grid-template-columns: 1fr;
+    }
+
   }
   
   @media (max-width: 600px) {
     .hero-title {
-      font-size: 2.75rem;
+      font-size: 3.5rem;
+      line-height: 3.5rem;
+      text-align: center;
+    }
+
+    .hero-text,
+    .subheading {
+      text-align: center;
+      line-height: 2rem;
     }
   }
   

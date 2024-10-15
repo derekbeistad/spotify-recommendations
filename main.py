@@ -27,44 +27,50 @@ def create_playlist_cover(playlist_name):
     # Initialize ImageDraw
     d = ImageDraw.Draw(img)
 
-    # Define fonts (you may need to provide the full path to a .ttf file)
+    # Define fonts
     try:
-        font = ImageFont.truetype("fonts/PalanquinDark-Bold", 120)
+        font = ImageFont.truetype(font="fonts/PalanquinDark-Bold.ttf", size=150)
+        font2 = ImageFont.truetype(font="fonts/PalanquinDark-Medium.ttf", size=73)
     except IOError:
         font = ImageFont.load_default()
+        font2 = ImageFont.load_default()
 
-    # Define text and wrap it to fit within image width
-    max_width = 780  # Maximum width for the text (accounting for margins)
-    wrapped_text = textwrap.fill(playlist_name, width=20)  # Wrap text to fit the image
+    # Wrap text to fit the image
+    wrapped_text = textwrap.fill(playlist_name, width=10)
 
     # Split the wrapped text into multiple lines
     lines = wrapped_text.split('\n')
 
+    # Get text bounding box for a tall character to establish line height
+    _, _, text_width, text_height = d.textbbox((0, 0), "A", font=font)
+
+    # Set a fixed line height and line spacing
+    fixed_line_height = text_height - 65  # You can adjust the spacing as needed
+
     # Calculate the total height of the text block to center it vertically
-    total_text_height = sum([d.textbbox((0, 0), line, font=font)[3] for line in lines])
+    total_text_height = len(lines) * fixed_line_height
 
     # Starting Y position (for vertical centering)
-    y = (800 - total_text_height) // 2
+    y = -50
 
     # Draw each line of text aligned to the right
     for line in lines:
-        # Get text bounding box (to calculate width and height)
+        # Get text bounding box (to calculate width)
         bbox = d.textbbox((0, 0), line, font=font)
         text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
-        
-        # Align the text to the right by placing it at the far right minus the text width
-        x = 800 - text_width - 10  # 10 pixels padding from the right edge
+
+        # Align the text to the right
+        x = 800 - text_width - 20  # 10 pixels padding from the right edge
 
         # Draw the text on the image
         d.text((x, y), line, fill=(236, 160, 40), font=font)
 
-        # Move to the next line
-        y += text_height
+        # Move to the next line using the fixed line height
+        y += fixed_line_height
 
     # Draw the artist names
-    y_offset = 40
-    d.text((10, y_offset), 'made by Discovery Jam', fill=(247, 230, 210), font=font)
+    y_offset = 675
+    d.text((10, y_offset), 'made by Discovery Jam', fill=(247, 230, 210), font=font2)
 
     # Create a BytesIO object to hold the image
     img_bytes = BytesIO()
@@ -83,7 +89,6 @@ def ensure_token_is_valid():
         # Refresh the token if it has expired
         token_info = sp_oauth.refresh_access_token(cache_handler.get_cached_token()['refresh_token'])
         cache_handler.save_token_to_cache(token_info)
-
 
 # Spotify Web API constants
 CLIENT_ID = os.getenv('CLIENT_ID')
@@ -299,7 +304,7 @@ def get_top_artists():
 
         
         if playlist:
-            return playlist[0]['external_urls']['spotify']
+            return (playlist[0]['external_urls']['spotify'], playlist_name)
         else:
             return False
 
@@ -345,11 +350,11 @@ def get_top_artists():
                                                     valence=valence)
 
     if request.method == 'POST':  # When the form is submitted
-        playlist_url = create_user_playlist()
+        playlist_url, playlist_name = create_user_playlist()
         if playlist_url:
             session.clear()
             message = 'Playlist Created! View ↓'
-            return redirect(url_for('success', playlist_url=playlist_url))  # Pass the URL as a query parameter
+            return redirect(url_for('success', playlist_url=playlist_url, playlist_name=playlist_name))  # Pass the URL as a query parameter
         elif not playlist_url:
             message = 'Playlist not created, try again'
         return redirect(url_for('get_top_artists', message=message))  # Redirect to avoid form resubmission
@@ -361,11 +366,14 @@ def get_top_artists():
 
     return render_template('recs.html', user=user, artist_seeds=artist_seeds, genre_seeds=genre_seeds, track_recs=track_recs, playlist_url=playlist_url, playlist_created=playlist_created, message=message)
 
-# Pplaylist created Successfully
+# Playlist created Successfully
 @app.route('/success')
 def success():
     playlist_url = request.args.get('playlist_url')  # Retrieve the playlist URL from the query parameters
-    return render_template('playlist_created.html', playlist_url=playlist_url)
+    playlist_name = request.args.get('playlist_name')
+    img = create_playlist_cover(playlist_name)
+    return render_template('playlist_created.html', playlist_url=playlist_url, img=img)
+
 
 # logout route
 @app.route('/logout')
@@ -383,4 +391,4 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
