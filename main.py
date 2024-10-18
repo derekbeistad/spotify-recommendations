@@ -94,7 +94,7 @@ def ensure_token_is_valid():
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 SECRET_KEY = os.getenv('SECRET_KEY')
-REDIRECT_URI = 'http://localhost:5000/callback'
+REDIRECT_URI = 'https://discovery-jam-b001a7c3c17b.herokuapp.com/callback'
 SCOPE = 'playlist-read-private,user-top-read,playlist-modify-public,ugc-image-upload'
 
 # create Flask app
@@ -108,6 +108,7 @@ app.config['ENV'] = os.getenv('ENV', 'development')  # Default to 'development' 
 # Use secure cookies
 app.config['SESSION_COOKIE_SECURE'] = True  # Ensures cookies are only sent over HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevents JavaScript from accessing cookies
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Prevent CSRF attacks
 csrf = CSRFProtect(app)
 
 # spotipy cache handler setup
@@ -391,4 +392,4 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
