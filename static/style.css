@@ -146,6 +146,9 @@
     100% { transform: rotate(360deg); }
   }
 
+  .show {
+    display: flex; /* Show the overlay */}
+
   /* Hero Section */
   .hero-section {
     display: grid;
