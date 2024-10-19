@@ -41,6 +41,8 @@
         />
 
         <script nonce="{{ request.cookies['csp_nonce'] }}">
+            console.log('Inline script running!');
+            console.log("{{ request.cookies['csp_nonce'] }}");
             function showLoading() {
                 document.getElementById('loadingOverlay').style.display = 'flex';
             }
