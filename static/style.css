@@ -127,7 +127,7 @@
     text-align: center;
     justify-content: center;
     align-items: center;
-    display: flex;
+    display: none;
     flex-direction: column;
     z-index: 1000; /* Ensure it's above all other content */
   }
