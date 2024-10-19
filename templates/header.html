@@ -39,7 +39,7 @@
             rel="stylesheet"
         />
 
-        <script nonce="{{ response.headers.get('CSP-Nonce') }}">
+        <script nonce="{{ response.nonce }}">
             console.log('Inline script running!');
             console.log("{{ response.headers.get('CSP-Nonce') }}");
             function showLoading() {
