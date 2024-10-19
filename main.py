@@ -247,16 +247,20 @@ def get_top_artists():
                                ,max_popularity=8
                                ,target_popularity=4           #popularity setting
                                )
+        
+        top_artist_ids = [artist['id'] for artist in artists][:10]  # List of artist IDs
         cleaned_tracks = []
         for track in recs['tracks']:
-            cleaned_tracks.append({
-                'track_id': track['id'],
-                'track_name': track['name'],
-                'track_image': track['album']['images'][0]['url'],
-                'preview': track['preview_url'],
-                'artist_id': track['artists'][0]['id'],
-                'artist_name': track['artists'][0]['name']
-            })
+            artist_id = track['artists'][0]['id']
+            if artist_id not in top_artist_ids:
+                cleaned_tracks.append({
+                    'track_id': track['id'],
+                    'track_name': track['name'],
+                    'track_image': track['album']['images'][0]['url'],
+                    'preview': track['preview_url'],
+                    'artist_id': track['artists'][0]['id'],
+                    'artist_name': track['artists'][0]['name']
+                })
         artist_seeds = []
         genre_seeds = []
         for seed in recs['seeds']:
