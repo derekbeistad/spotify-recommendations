@@ -139,6 +139,7 @@ def add_csp_header(response):
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "style-src 'self' https://fonts.googleapis.com; "
+        "style-src-elem 'self' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         f"script-src 'self' 'nonce-{nonce}';"
     )
