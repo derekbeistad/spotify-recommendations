@@ -39,9 +39,9 @@
             rel="stylesheet"
         />
 
-        <script nonce="{{ request.cookies['csp_nonce'] }}">
+        <script nonce="{{ response.cookies.get('csp_nonce') }}">
             console.log('Inline script running!');
-            console.log("{{ request.cookies['csp_nonce'] }}");
+            console.log("{{ response.cookies.get('csp_nonce') }}");
             function showLoading() {
                 document.getElementById('loadingOverlay').style.display = 'flex';
             }

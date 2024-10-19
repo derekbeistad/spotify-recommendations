@@ -132,15 +132,10 @@ sp = Spotify(auth_manager=sp_oauth)
 def before_request():
     if not request.is_secure and app.config['ENV'] == 'production':
         return redirect(request.url.replace("http://", "https://"))
-    
-@app.context_processor
-def context_processor():
-    nonce = str(uuid.uuid4())
-    return dict(nonce=nonce)
 
 @app.after_request
 def add_csp_header(response):
-    nonce = request.context.get('nonce', None)  # Get the nonce from the context
+    nonce = str(uuid.uuid4())  # Get the nonce from the context
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "style-src 'self' https://fonts.googleapis.com; "
