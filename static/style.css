@@ -127,7 +127,7 @@
     text-align: center;
     justify-content: center;
     align-items: center;
-    display: none;
+    display: flex;
     flex-direction: column;
     z-index: 1000; /* Ensure it's above all other content */
   }
@@ -146,8 +146,8 @@
     100% { transform: rotate(360deg); }
   }
 
-  .show {
-    display: flex; /* Show the overlay */
+  .hide {
+    display: none; /* Show the overlay */
   }
 
   /* Hero Section */
