@@ -129,7 +129,7 @@
     align-items: center;
     display: flex;
     flex-direction: column;
-    z-index: 1000; /* Ensure it's above all other content */
+    z-index: -1000; /* set overlay all the way back */
   }
 
   .spinner {
@@ -146,8 +146,8 @@
     100% { transform: rotate(360deg); }
   }
 
-  .hide {
-    display: none; /* Show the overlay */
+  .show {
+    z-index: 1000; /* bring the overlay to the front */
   }
 
   /* Hero Section */
