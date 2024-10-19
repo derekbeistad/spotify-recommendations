@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 import base64
 import textwrap
-# from flask import send_file
+import uuid
 
 # load env variables
 load_dotenv()
@@ -132,6 +132,18 @@ sp = Spotify(auth_manager=sp_oauth)
 def before_request():
     if not request.is_secure and app.config['ENV'] == 'production':
         return redirect(request.url.replace("http://", "https://"))
+    
+@app.after_request
+def add_csp_header(response):
+    nonce = str(uuid.uuid4())  # Generate a unique nonce
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "style-src 'self' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        f"script-src 'self' 'nonce-{nonce}';"
+    )
+    response.set_cookie('csp_nonce', nonce)
+    return response
 
 # home route
 @app.route('/')

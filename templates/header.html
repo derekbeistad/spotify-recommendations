@@ -40,11 +40,11 @@
             rel="stylesheet"
         />
 
-        <script>
+        <script nonce="{{ request.cookies['csp_nonce'] }}">
             function showLoading() {
                 document.getElementById('loadingOverlay').style.display = 'flex';
             }
-            </script>
+        </script>
             
 
     </head>
