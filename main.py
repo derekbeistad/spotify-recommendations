@@ -253,6 +253,8 @@ def get_top_artists():
                                ,target_popularity=4           #popularity setting
                                )
         
+
+        print(artists)
         top_artist_ids = [artist['id'] for artist in artists][:10]  # List of artist IDs
         cleaned_tracks = []
         for track in recs['tracks']:
@@ -346,7 +348,7 @@ def get_top_artists():
     # order by most common and limit to 5
     genres = clean_arrays(genres_array)
     artists = clean_arrays(artists_array)
-
+    
     # create list of dictionaries for top tracks
     tracks = []
     for track in top_tracks:
