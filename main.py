@@ -134,6 +134,12 @@ sp = Spotify(auth_manager=sp_oauth)
 def before_request():
     if not request.is_secure and app.config['ENV'] == 'production':
         return redirect(request.url.replace("http://", "https://"))
+    
+@app.before_request
+def generate_nonce():
+    """Generate a nonce for CSP."""
+    global global_nonce
+    global_nonce = str(uuid.uuid4())  # Generate a new nonce for each request
 
 @app.after_request
 def add_csp_header(response):
