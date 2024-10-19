@@ -137,11 +137,7 @@ def before_request():
 def add_csp_header(response):
     nonce = str(uuid.uuid4())  # Generate a unique nonce
     response.headers['Content-Security-Policy'] = (
-        "default-src 'self'; "
-        "style-src 'self' https://fonts.googleapis.com; "
-        "style-src-elem 'self' https://fonts.googleapis.com; "
-        "font-src 'self' https://fonts.gstatic.com; "
-        f"script-src 'self' 'nonce-{nonce}';"
+        f"default-src 'self'; style-src 'self' https://fonts.googleapis.com; style-src-elem 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'nonce-{nonce}';"
     )
     response.set_cookie('csp_nonce', nonce)
     return response
