@@ -133,9 +133,14 @@ def before_request():
     if not request.is_secure and app.config['ENV'] == 'production':
         return redirect(request.url.replace("http://", "https://"))
     
+@app.context_processor
+def context_processor():
+    nonce = str(uuid.uuid4())
+    return dict(nonce=nonce)
+
 @app.after_request
 def add_csp_header(response):
-    nonce = str(uuid.uuid4())  # Generate a unique nonce
+    nonce = request.context.get('nonce', None)  # Get the nonce from the context
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "style-src 'self' https://fonts.googleapis.com; "
@@ -144,6 +149,8 @@ def add_csp_header(response):
         f"script-src 'self' 'nonce-{nonce}';"  # Allow inline scripts with nonce
     )
     response.set_cookie('csp_nonce', nonce)
+    # Log the CSP header for debugging
+    print(f"CSP Header: {response.headers['Content-Security-Policy']}")
     return response
 
 # home route
