@@ -40,11 +40,10 @@
         />
 
         <script nonce="{{ nonce }}">
-            console.log('Inline script running!');
-            console.log("{{ nonce }}");
             function showLoading() {
                 document.getElementById('loadingOverlay').style.display = 'flex';
             }
+            document.getElementById('loadButton').addEventListener('click', showLoading);
         </script>
             
 

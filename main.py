@@ -142,6 +142,8 @@ def before_request():
 def add_csp_header(response):
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
+        "img-src 'self' data: https://*;"
+        "media-src 'self' https://*;"
         "style-src 'self' https://fonts.googleapis.com; "
         "style-src-elem 'self' https://fonts.googleapis.com; "  # Ensure both style-src and style-src-elem include Google Fonts
         "font-src 'self' https://fonts.gstatic.com; "  # Google Fonts require this domain to load the fonts
