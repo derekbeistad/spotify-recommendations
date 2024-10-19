@@ -144,6 +144,7 @@ def add_csp_header(response):
         f"script-src 'self' 'nonce-{nonce}';"  # Allow inline scripts with nonce
     )
     response.headers['CSP-Nonce'] = nonce  # Add nonce to response headers for use in templates
+    response.nonce = nonce
     return response
 
 # home route
