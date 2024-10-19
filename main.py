@@ -253,9 +253,7 @@ def get_top_artists():
                                ,target_popularity=4           #popularity setting
                                )
         
-
-        print(artists)
-        top_artist_ids = [artist['id'] for artist in artists][:10]  # List of artist IDs
+        top_artist_ids = [artist for artist in artists]  # List of artist IDs
         cleaned_tracks = []
         for track in recs['tracks']:
             artist_id = track['artists'][0]['id']
