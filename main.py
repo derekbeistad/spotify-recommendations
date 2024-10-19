@@ -1,5 +1,5 @@
 # imports
-from flask import Flask, session, redirect, url_for, request, render_template, flash
+from flask import Flask, session, redirect, url_for, request, render_template, g
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
@@ -135,11 +135,8 @@ def before_request():
     if not request.is_secure and app.config['ENV'] == 'production':
         return redirect(request.url.replace("http://", "https://"))
     
-@app.before_request
-def generate_nonce():
-    """Generate a nonce for CSP."""
-    global global_nonce
-    global_nonce = str(uuid.uuid4())  # Generate a new nonce for each request
+    # Generate a nonce for the current request and store it in g (Flask's context)
+    g.nonce = str(uuid.uuid4())
 
 @app.after_request
 def add_csp_header(response):
@@ -148,15 +145,15 @@ def add_csp_header(response):
         "style-src 'self' https://fonts.googleapis.com; "
         "style-src-elem 'self' https://fonts.googleapis.com; "  # Ensure both style-src and style-src-elem include Google Fonts
         "font-src 'self' https://fonts.gstatic.com; "  # Google Fonts require this domain to load the fonts
-        f"script-src 'self' 'nonce-{global_nonce}';"  # Allow inline scripts with nonce
+        f"script-src 'self' 'nonce-{g.nonce}';"  # Allow inline scripts with nonce
     )
-    response.set_cookie('csp_nonce', global_nonce)
+    response.set_cookie('csp_nonce', g.nonce)
     return response
 
 # home route
 @app.route('/')
 def home():
-    return render_template('index.html', nonce=global_nonce)
+    return render_template('index.html', nonce=g.nonce)
 
 # home route
 @app.route('/login')
@@ -389,7 +386,7 @@ def get_top_artists():
     playlist_created = request.args.get('playlist_created')  # Check if the playlist was created
     message = request.args.get('message')
 
-    return render_template('recs.html', user=user, artist_seeds=artist_seeds, genre_seeds=genre_seeds, track_recs=track_recs, playlist_url=playlist_url, playlist_created=playlist_created, message=message, nonce=global_nonce)
+    return render_template('recs.html', user=user, artist_seeds=artist_seeds, genre_seeds=genre_seeds, track_recs=track_recs, playlist_url=playlist_url, playlist_created=playlist_created, message=message, nonce=g.nonce)
 
 # Playlist created Successfully
 @app.route('/success')
@@ -397,7 +394,7 @@ def success():
     playlist_url = request.args.get('playlist_url')  # Retrieve the playlist URL from the query parameters
     playlist_name = request.args.get('playlist_name')
     img = create_playlist_cover(playlist_name)
-    return render_template('playlist_created.html', playlist_url=playlist_url, img=img, nonce=global_nonce)
+    return render_template('playlist_created.html', playlist_url=playlist_url, img=img, nonce=g.nonce)
 
 # logout route
 @app.route('/logout')
