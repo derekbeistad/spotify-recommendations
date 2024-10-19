@@ -16,6 +16,8 @@ import base64
 import textwrap
 import uuid
 
+global_nonce = None
+
 # load env variables
 load_dotenv()
 
@@ -135,23 +137,22 @@ def before_request():
 
 @app.after_request
 def add_csp_header(response):
-    nonce = str(uuid.uuid4())  # Get the nonce from the context
+    global global_nonce
+    global_nonce = str(uuid.uuid4())  # Get the nonce from the context
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "style-src 'self' https://fonts.googleapis.com; "
         "style-src-elem 'self' https://fonts.googleapis.com; "  # Ensure both style-src and style-src-elem include Google Fonts
         "font-src 'self' https://fonts.gstatic.com; "  # Google Fonts require this domain to load the fonts
-        f"script-src 'self' 'nonce-{nonce}';"  # Allow inline scripts with nonce
+        f"script-src 'self' 'nonce-{global_nonce}';"  # Allow inline scripts with nonce
     )
-    response.set_cookie('csp_nonce', nonce)
-    # Log the CSP header for debugging
-    print(f"CSP Header: {response.headers['Content-Security-Policy']}")
+    response.set_cookie('csp_nonce', global_nonce)
     return response
 
 # home route
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('index.html', nonce=global_nonce)
 
 # home route
 @app.route('/login')
@@ -384,7 +385,7 @@ def get_top_artists():
     playlist_created = request.args.get('playlist_created')  # Check if the playlist was created
     message = request.args.get('message')
 
-    return render_template('recs.html', user=user, artist_seeds=artist_seeds, genre_seeds=genre_seeds, track_recs=track_recs, playlist_url=playlist_url, playlist_created=playlist_created, message=message)
+    return render_template('recs.html', user=user, artist_seeds=artist_seeds, genre_seeds=genre_seeds, track_recs=track_recs, playlist_url=playlist_url, playlist_created=playlist_created, message=message, nonce=global_nonce)
 
 # Playlist created Successfully
 @app.route('/success')
@@ -392,8 +393,7 @@ def success():
     playlist_url = request.args.get('playlist_url')  # Retrieve the playlist URL from the query parameters
     playlist_name = request.args.get('playlist_name')
     img = create_playlist_cover(playlist_name)
-    return render_template('playlist_created.html', playlist_url=playlist_url, img=img)
-
+    return render_template('playlist_created.html', playlist_url=playlist_url, img=img, nonce=global_nonce)
 
 # logout route
 @app.route('/logout')
