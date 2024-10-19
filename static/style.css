@@ -147,7 +147,8 @@
   }
 
   .show {
-    display: flex; /* Show the overlay */}
+    display: flex; /* Show the overlay */
+  }
 
   /* Hero Section */
   .hero-section {
