@@ -143,8 +143,7 @@ def add_csp_header(response):
         "font-src 'self' https://fonts.gstatic.com; "  # Google Fonts require this domain to load the fonts
         f"script-src 'self' 'nonce-{nonce}';"  # Allow inline scripts with nonce
     )
-    response.headers['CSP-Nonce'] = nonce  # Add nonce to response headers for use in templates
-    response.nonce = nonce
+    response.set_cookie('csp_nonce', nonce)
     return response
 
 # home route
