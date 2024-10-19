@@ -143,8 +143,6 @@ def generate_nonce():
 
 @app.after_request
 def add_csp_header(response):
-    global global_nonce
-    global_nonce = str(uuid.uuid4())  # Get the nonce from the context
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "style-src 'self' https://fonts.googleapis.com; "
