@@ -129,7 +129,8 @@
     align-items: center;
     display: flex;
     flex-direction: column;
-    z-index: -1000; /* set overlay all the way back */
+    z-index: 1000; 
+    visibility: hidden;
   }
 
   .spinner {
@@ -147,7 +148,7 @@
   }
 
   .show {
-    z-index: 1000; /* bring the overlay to the front */
+    visibility: visible;
   }
 
   /* Hero Section */
