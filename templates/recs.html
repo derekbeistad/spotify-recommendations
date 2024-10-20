@@ -17,7 +17,7 @@
         <form method="POST" action="/get_top_artists">
             <!-- CSRF token for security -->
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button class="submit-btn" type="submit" onclick="showLoading()">
+            <button class="submit-btn" type="submit">
                 Create Spotify Playlist
             </button>
         </form>
@@ -74,7 +74,7 @@
         <form method="POST" action="/get_top_artists">
             <!-- CSRF token for security -->
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button class="submit-btn" type="submit" onclick="showLoading()">
+            <button class="submit-btn" type="submit">
                 Create Spotify Playlist
             </button>
         </form>
@@ -83,12 +83,6 @@
             ><span class="hero-text">Your Discovery Jam</span></a>
     {% endif %}
     
-</div>
-
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="loading-overlay">
-    <div class="spinner"></div>
-    <p class="nav-title">Creating your customized playlist...</p>
-</div>
+    </div>
 
 {% include 'footer.html' %}
