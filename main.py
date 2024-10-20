@@ -1,10 +1,10 @@
 # imports
-from flask import Flask, session, redirect, url_for, request, render_template, g
+from flask import Flask, session, redirect, url_for, request, render_template, g, flash
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
+from spotipy import SpotifyException
 import os
-import json
 from dotenv import load_dotenv, dotenv_values
 from collections import Counter
 import numpy as np
@@ -15,6 +15,7 @@ from io import BytesIO
 import base64
 import textwrap
 import uuid
+import time
 
 global_nonce = None
 
@@ -87,10 +88,10 @@ def create_playlist_cover(playlist_name):
 def ensure_token_is_valid():
     token_info = sp_oauth.validate_token(cache_handler.get_cached_token())
     
-    if not token_info:
-        # Refresh the token if it has expired
-        token_info = sp_oauth.refresh_access_token(cache_handler.get_cached_token()['refresh_token'])
+    if not token_info or not sp_oauth.is_token_expired(token_info):
+        token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
         cache_handler.save_token_to_cache(token_info)
+        sp.auth = token_info['access_token']  # Ensure the Spotify client is updated with the new token
 
 # Spotify Web API constants
 CLIENT_ID = os.getenv('CLIENT_ID')
@@ -237,23 +238,45 @@ def get_top_artists():
         """INPUT: genres array, artists array, daceability dictionary, 
             energy dictionary, valence dictionary
             OUTPUT: artist seeds, genre seeds, and track recommendations"""
-        recs = sp.recommendations(    #5 total seeds
-                                seed_genres=genres[:2]
-                            #    ,seed_tracks=track_ids[:2]
-                               ,seed_artists=artists[:3]
-                               ,min_danceability=danceability['min']
-                               ,max_danceability=danceability['max']
-                               ,target_danceability=danceability['mean']
-                               ,min_energy=energy['min']
-                               ,max_energy=energy['max']
-                               ,target_energy=energy['mean']
-                               ,min_valence=valence['min']
-                               ,max_valence=valence['max']
-                               ,target_valence=valence['mean']
-                               ,min_popularity=0
-                               ,max_popularity=8
-                               ,target_popularity=4           #popularity setting
-                               )
+        try:
+            recs = sp.recommendations(    #5 total seeds
+                                    seed_genres=genres[:2]
+                                #    ,seed_tracks=track_ids[:2]
+                                ,seed_artists=artists[:3]
+                                ,min_danceability=danceability['min']
+                                ,max_danceability=danceability['max']
+                                ,target_danceability=danceability['mean']
+                                ,min_energy=energy['min']
+                                ,max_energy=energy['max']
+                                ,target_energy=energy['mean']
+                                ,min_valence=valence['min']
+                                ,max_valence=valence['max']
+                                ,target_valence=valence['mean']
+                                ,min_popularity=0
+                                ,max_popularity=8
+                                ,target_popularity=4           #popularity setting
+                                )
+        except SpotifyException as e:
+            if e.http_status == 429:
+                retry_after = int(e.headers.get('Retry-After', 1))  # Retry-After is in seconds
+                time.sleep(retry_after)  # Wait for the given time before retrying
+                recs = sp.recommendations(    #5 total seeds
+                                    seed_genres=genres[:2]
+                                #    ,seed_tracks=track_ids[:2]
+                                ,seed_artists=artists[:3]
+                                ,min_danceability=danceability['min']
+                                ,max_danceability=danceability['max']
+                                ,target_danceability=danceability['mean']
+                                ,min_energy=energy['min']
+                                ,max_energy=energy['max']
+                                ,target_energy=energy['mean']
+                                ,min_valence=valence['min']
+                                ,max_valence=valence['max']
+                                ,target_valence=valence['mean']
+                                ,min_popularity=0
+                                ,max_popularity=8
+                                ,target_popularity=4           #popularity setting
+                                )  # Retry the API call
         
         top_artist_ids = [artist for artist in artists]  # List of artist IDs
         cleaned_tracks = []
@@ -300,23 +323,28 @@ def get_top_artists():
         # Ensure that the token is valid before making any API requests
         ensure_token_is_valid()
         
-        base_name = f"{user['name'].title()}'s Discovery Jam Vol:"
-        check = sp.user_playlists(user=user['id'], limit=1)['items']
-        if base_name in check[0]['name']:
-            idx = check[0]['name'].find(base_name) + len(base_name) + 1
-            vol_num = int(check[0]['name'][idx:]) + 1
-        else:
-            vol_num = 1
+        try:
+            base_name = f"{user['name'].title()}'s Discovery Jam Vol:"
+            check = sp.user_playlists(user=user['id'], limit=1)['items']
+            if base_name in check[0]['name']:
+                idx = check[0]['name'].find(base_name) + len(base_name) + 1
+                vol_num = int(check[0]['name'][idx:]) + 1
+            else:
+                vol_num = 1
 
-        playlist_name = base_name + '0' + str(vol_num)
-        
-        sp.user_playlist_create(user=user['id'],
-                                name=playlist_name,
-                                description="Discovery playlist created using your top genres and artists over the past year with the goal of helping you find new artists with smaller followings. Learn more at **webaddress**")
-        playlist = sp.user_playlists(user=user['id'], limit=1)['items']
-        sp.user_playlist_add_tracks(user=user['id'],
-                                    playlist_id=playlist[0]['id'],
-                                    tracks=[track['track_id'] for track in track_recs])
+            playlist_name = base_name + '0' + str(vol_num)
+            
+            sp.user_playlist_create(user=user['id'],
+                                    name=playlist_name,
+                                    description="Discovery playlist created using your top genres and artists over the past year with the goal of helping you find new artists with smaller followings. Learn more at **webaddress**")
+            playlist = sp.user_playlists(user=user['id'], limit=1)['items']
+            sp.user_playlist_add_tracks(user=user['id'],
+                                        playlist_id=playlist[0]['id'],
+                                        tracks=[track['track_id'] for track in track_recs])
+        except Exception as e:
+            print(f"Error creating playlist: {e}")
+            flash('Failed create playlist', 'error')
+
         # Generate the cover image
         img = create_playlist_cover(playlist_name)
 
@@ -325,6 +353,7 @@ def get_top_artists():
             sp.playlist_upload_cover_image(playlist_id=playlist[0]['id'], image_b64=img)
         except Exception as e:
             print(f"Error uploading cover image: {e}")
+            flash(f"Error uploading cover image: {e}")
 
         
         if playlist:
@@ -337,6 +366,8 @@ def get_top_artists():
         auth_url = sp_oauth.get_authorize_url()
         return redirect(auth_url)
     
+    ensure_token_is_valid()
+
     # get current user info
     user = get_user_info()
     top_artists = sp.current_user_top_artists(time_range='long_term')['items']
@@ -377,11 +408,11 @@ def get_top_artists():
         playlist_url, playlist_name = create_user_playlist()
         if playlist_url:
             session.clear()
-            message = 'Playlist Created! View ↓'
+            flash('Playlist Created! View ↓')
             return redirect(url_for('success', playlist_url=playlist_url, playlist_name=playlist_name))  # Pass the URL as a query parameter
         elif not playlist_url:
-            message = 'Playlist not created, try again'
-        return redirect(url_for('get_top_artists', message=message))  # Redirect to avoid form resubmission
+            flash('Playlist not created, try again')
+        return redirect(url_for('get_top_artists'))  # Redirect to avoid form resubmission
 
     # Handle GET request
     playlist_url = request.args.get('playlist_url')  # Retrieve the playlist URL from the query parameters
