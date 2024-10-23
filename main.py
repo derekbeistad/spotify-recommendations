@@ -136,7 +136,6 @@ sp = Spotify(auth_manager=sp_oauth)
 def before_request():
     if not request.is_secure and app.config['ENV'] == 'production':
         return redirect(request.url.replace("http://", "https://"))
-    
     # Generate a nonce for the current request and store it in g (Flask's context)
     g.nonce = str(uuid.uuid4())
 
