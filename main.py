@@ -146,7 +146,7 @@ def add_csp_header(response):
         "img-src 'self' data: https://*;"
         "media-src 'self' https://*;"
         "style-src 'self' https://fonts.googleapis.com; "
-        "style-src-elem 'self' https://fonts.googleapis.com; "  # Ensure both style-src and style-src-elem include Google Fonts
+        "style-src-elem 'self' https://fonts.googleapis.com https://fonts.googleapis.com; "  # Ensure both style-src and style-src-elem include Google Fonts
         "font-src 'self' https://fonts.gstatic.com; "  # Google Fonts require this domain to load the fonts
         f"script-src 'self' 'nonce-{g.nonce}';"  # Allow inline scripts with nonce
     )
