@@ -115,6 +115,11 @@
     font-style: italic;
   }
 
+  .spotify-logo-button {
+    height: 1.4em;
+    vertical-align: middle;
+  }
+
   /* Hero Section */
   .hero-section {
     display: grid;
