@@ -97,8 +97,8 @@ def ensure_token_is_valid():
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 SECRET_KEY = os.getenv('SECRET_KEY')
-# REDIRECT_URI = 'https://discovery-jam-b001a7c3c17b.herokuapp.com/callback'
-REDIRECT_URI = 'http://localhost:5000/callback'
+REDIRECT_URI = 'https://discovery-jam-f859bf5d65ee.herokuapp.com/callback'
+# REDIRECT_URI = 'http://localhost:5000/callback'
 SCOPE = 'playlist-read-private,user-top-read,playlist-modify-public,ugc-image-upload'
 
 # create Flask app
