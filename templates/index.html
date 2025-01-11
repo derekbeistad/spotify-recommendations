@@ -7,11 +7,23 @@
             artists that are lesser-known.</p>
 
 
+            <form>
+                <input type="checkbox" id="agree" />
+                <label for="agree">I agree to the <a href="/terms-of-service" target="_blank">Terms of Service</a> and <a href="/privacy-policy" target="_blank">Privacy Policy</a></label>
+            </form>
         <a href="/login" class="login-btn">
-            <span class="hero-text">Login with 
-                <img src="../static/images/Spotify_Full_Logo_RGB_Green.png" class="spotify-logo-button" alt="Spotify" /></span></a>
+            <span class="hero-text">Login with Spotify</span></a>
 
+        <p class="text">This product uses the Spotify API but is not endorsed, certified, or otherwise approved by Spotify.</p>
         
+            <!--  logout button -->
+        <a href="{{ url_for('logout') }}" class="logout-btn">
+            <span class="text">logout from Spotify</span></a>
+
     </div>
+
+    <script src="{{ url_for('static', filename='scripts.js') }}" nonce="{{ nonce }}"></script>
+
+
 
 {% include 'footer.html' %}

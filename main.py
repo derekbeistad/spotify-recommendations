@@ -97,8 +97,8 @@ def ensure_token_is_valid():
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 SECRET_KEY = os.getenv('SECRET_KEY')
-REDIRECT_URI = 'https://discovery-jam-b001a7c3c17b.herokuapp.com/callback'
-# REDIRECT_URI = 'http://localhost:5000/callback'
+# REDIRECT_URI = 'https://discovery-jam-b001a7c3c17b.herokuapp.com/callback'
+REDIRECT_URI = 'http://localhost:5000/callback'
 SCOPE = 'playlist-read-private,user-top-read,playlist-modify-public,ugc-image-upload'
 
 # create Flask app
@@ -420,6 +420,14 @@ def get_top_artists():
     message = request.args.get('message')
 
     return render_template('recs.html', user=user, artist_seeds=artist_seeds, genre_seeds=genre_seeds, track_recs=track_recs, playlist_url=playlist_url, playlist_created=playlist_created, message=message, nonce=g.nonce)
+
+@app.route('/privacy-policy')
+def privacy_policy():
+    return render_template('privacy_policy.html')
+
+@app.route('/terms-of-service')
+def terms_of_service():
+    return render_template('terms_of_service.html')
 
 # Playlist created Successfully
 @app.route('/success')

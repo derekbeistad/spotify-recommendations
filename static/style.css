@@ -120,6 +120,19 @@
     vertical-align: middle;
   }
 
+  /* Policy-section */
+  .policy-section {
+    display: flex;
+    justify-content: center;
+  }
+
+  .policy-inner {
+    padding: 5rem 1rem;
+    text-align: center;
+    width: 70%;
+    text-wrap: pretty;
+  }
+
   /* Hero Section */
   .hero-section {
     display: grid;
@@ -133,6 +146,15 @@
   }
 
   .login-btn {
+    background-color: var(--clr-blue);
+    border-radius: 50px;
+    width:fit-content;
+    padding: 0.5rem 1rem;
+    margin: 1.5rem;
+    text-align: center;
+  }
+
+  .logout-btn {
     background-color: var(--clr-blue);
     border-radius: 50px;
     width:fit-content;

@@ -22,7 +22,7 @@
             <!-- CSRF token for security -->
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button class="submit-btn" type="submit">
-                Create <img src="../static/images/Spotify_Full_Logo_RGB_Green.png" class="spotify-logo-button" alt="Spotify" /> Playlist
+                Create Spotify Playlist
             </button>
         </form>
     {% else %} 
@@ -30,7 +30,7 @@
             ><span class="hero-text">Your Discovery Jam</span></a>
     {% endif %}
 
-    <p class="text">All data gathered from and provided by <img src="../static/images/Spotify_Full_Logo_RGB_Green.png" class="spotify-logo-button" alt="Spotify" /></p>
+    <p class="text">All data gathered from and provided by Spotify but is not endorsed, certified, or otherwise approved by Spotify.</p>
      
     <p class="subheading">Looking at the past year of your listening...</p>
 
@@ -81,13 +81,17 @@
             <!-- CSRF token for security -->
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button class="submit-btn" type="submit">
-                Create <img src="../static/images/Spotify_Full_Logo_RGB_Green.png" class="spotify-logo-button" alt="Spotify" /> Playlist
+                Create Spotify Playlist
             </button>
         </form>
     {% else %} 
         <a href="{{ playlist_url }}" class="login-btn" target="_blank"
             ><span class="hero-text">Your Discovery Jam</span></a>
     {% endif %}
+
+    <!--  logout button -->
+    <a href="{{ url_for('logout') }}" class="logout-btn">
+        <span class="text">Logout</span></a>
     
     </div>
 
