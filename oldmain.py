@@ -1,4 +1,4 @@
-import logging
+# imports
 from flask import Flask, session, redirect, url_for, request, render_template, g, flash
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
@@ -17,12 +17,81 @@ import textwrap
 import uuid
 import time
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+global_nonce = None
 
 # load env variables
 load_dotenv()
+
+# Create playlist Cover Image Function
+def create_playlist_cover(playlist_name):
+    # Create a new blank image with RGB mode
+    img = Image.new('RGB', (800, 800), color='#171717')
+
+    # Initialize ImageDraw
+    d = ImageDraw.Draw(img)
+
+    # Define fonts
+    try:
+        font = ImageFont.truetype(font="fonts/PalanquinDark-Bold.ttf", size=150)
+        font2 = ImageFont.truetype(font="fonts/PalanquinDark-Medium.ttf", size=73)
+    except IOError:
+        font = ImageFont.load_default()
+        font2 = ImageFont.load_default()
+
+    # Wrap text to fit the image
+    wrapped_text = textwrap.fill(playlist_name, width=10)
+
+    # Split the wrapped text into multiple lines
+    lines = wrapped_text.split('\n')
+
+    # Get text bounding box for a tall character to establish line height
+    _, _, text_width, text_height = d.textbbox((0, 0), "A", font=font)
+
+    # Set a fixed line height and line spacing
+    fixed_line_height = text_height - 65  # You can adjust the spacing as needed
+
+    # Calculate the total height of the text block to center it vertically
+    total_text_height = len(lines) * fixed_line_height
+
+    # Starting Y position (for vertical centering)
+    y = -50
+
+    # Draw each line of text aligned to the right
+    for line in lines:
+        # Get text bounding box (to calculate width)
+        bbox = d.textbbox((0, 0), line, font=font)
+        text_width = bbox[2] - bbox[0]
+
+        # Align the text to the right
+        x = 800 - text_width - 20  # 10 pixels padding from the right edge
+
+        # Draw the text on the image
+        d.text((x, y), line, fill=(236, 160, 40), font=font)
+
+        # Move to the next line using the fixed line height
+        y += fixed_line_height
+
+    # Draw the artist names
+    y_offset = 675
+    d.text((10, y_offset), 'made by Discovery Jam', fill=(247, 230, 210), font=font2)
+
+    # Create a BytesIO object to hold the image
+    img_bytes = BytesIO()
+    img.save(img_bytes, format='JPEG')
+    img_bytes.seek(0)  # Seek to the beginning so it can be read
+
+    # Convert the image to base64
+    img_base64 = base64.b64encode(img_bytes.getvalue()).decode('utf-8')
+
+    return img_base64
+
+def ensure_token_is_valid():
+    token_info = sp_oauth.validate_token(cache_handler.get_cached_token())
+    
+    if not token_info or not sp_oauth.is_token_expired(token_info):
+        token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
+        cache_handler.save_token_to_cache(token_info)
+        sp.auth = token_info['access_token']  # Ensure the Spotify client is updated with the new token
 
 # Spotify Web API constants
 CLIENT_ID = os.getenv('CLIENT_ID')
@@ -87,28 +156,19 @@ def add_csp_header(response):
 # home route
 @app.route('/')
 def home():
-    logger.info('Home route accessed')
     return render_template('index.html', nonce=g.nonce)
 
-# login route
+# home route
 @app.route('/login')
 def login():
-    logger.info('Login route accessed')
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
         auth_url = sp_oauth.get_authorize_url()
         return redirect(auth_url)
     return redirect(url_for('get_top_artists'))
 
-# logout route
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
-
 # redirect uri route
 @app.route('/callback')
 def callback():
-    logger.info('Callback route accessed')
     # This retrieves the cached token instead of getting a new one
     token_info = sp_oauth.get_cached_token()
 
@@ -120,7 +180,6 @@ def callback():
 # get_top_artists route
 @app.route('/get_top_artists', methods=['GET', 'POST'])
 def get_top_artists():
-    logger.info('get_top_artists route accessed')
     # Route Functions
     def create_artists_genres_arrays(top_artists):
         """input spotify's current user top artists object and
@@ -283,7 +342,7 @@ def get_top_artists():
                                         playlist_id=playlist[0]['id'],
                                         tracks=[track['track_id'] for track in track_recs])
         except Exception as e:
-            logger.error(f"Error creating playlist: {e}")
+            print(f"Error creating playlist: {e}")
             flash('Failed create playlist', 'error')
 
         # Generate the cover image
@@ -293,7 +352,7 @@ def get_top_artists():
         try:
             sp.playlist_upload_cover_image(playlist_id=playlist[0]['id'], image_b64=img)
         except Exception as e:
-            logger.error(f"Error uploading cover image: {e}")
+            print(f"Error uploading cover image: {e}")
             flash(f"Error uploading cover image: {e}")
 
         
@@ -394,4 +453,4 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run()
