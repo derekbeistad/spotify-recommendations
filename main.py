@@ -378,12 +378,6 @@ def success():
     img = create_playlist_cover(playlist_name)
     return render_template('playlist_created.html', playlist_url=playlist_url, img=img, nonce=g.nonce)
 
-# logout route
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
-
 # Handle errors
 @app.errorhandler(404)
 def not_found(error):
@@ -394,4 +388,4 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=False) 
