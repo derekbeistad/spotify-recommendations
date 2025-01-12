@@ -253,7 +253,7 @@ def get_top_artists():
                                 ,max_valence=valence['max']
                                 ,target_valence=valence['mean']
                                 ,min_popularity=0
-                                ,max_popularity=5
+                                ,max_popularity=7
                                 ,target_popularity=2          #popularity setting
                                 )
         except SpotifyException as e:
